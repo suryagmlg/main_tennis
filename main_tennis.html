@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis Americano Score by SG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --court-green: #2d5016;
+            --court-blue: #0066cc;
+            --accent-orange: #ff6b35;
+            --accent-yellow: #ffd23f;
+            --dark: #1a1a1a;
+            --dark-secondary: #2a2a2a;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --gray-light: #e9ecef;
+            --success: #28a745;
+            --male-blue: #4a90e2;
+            --female-pink: #e91e63;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+            padding-bottom: 60px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Dashboard */
+        .dashboard-header {
+            text-align: center;
+            padding: 40px 20px 30px;
+            color: white;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .dashboard-header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--court-green), #3d7021);
+            color: white;
+            box-shadow: 0 4px 15px rgba(45, 80, 22, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(45, 80, 22, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 2px solid var(--gray-light);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-light);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+            display: inline-block;
+            width: auto;
+        }
+
+        /* Tournament List */
+        .tournament-item {
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-light);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .tournament-item:last-child {
+            border-bottom: none;
+        }
+
+        .tournament-item:hover {
+            background: var(--light);
+        }
+
+        .tournament-item h3 {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+            color: var(--dark);
+        }
+
+        .tournament-item p {
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge-ongoing {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .badge-completed {
+            background: #dfe6e9;
+            color: var(--gray);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: white;
+            padding: 8px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 16px;
+            z-index: 100;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 8px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--gray);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--court-green), #3d7021);
+            color: white;
+            box-shadow: 0 2px 8px rgba(45, 80, 22, 0.3);
+        }
+
+        /* Tournament Header */
+        .tournament-header {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .editable-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border: none;
+            width: 100%;
+            background: transparent;
+            color: var(--dark);
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .editable-title:focus {
+            outline: 2px solid var(--court-green);
+            border-radius: 4px;
+            padding: 4px;
+        }
+
+        .subtitle {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .subtitle input {
+            border: none;
+            background: var(--light);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        .rules {
+            background: var(--light);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--gray);
+            border: none;
+            width: 100%;
+            font-family: 'Outfit', sans-serif;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        /* Leaderboard */
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-light);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray);
+            width: 50px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .rank.gold { color: #ffd700; }
+        .rank.silver { color: #c0c0c0; }
+        .rank.bronze { color: #cd7f32; }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gender-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .gender-badge.male {
+            background: var(--male-blue);
+        }
+
+        .gender-badge.female {
+            background: var(--female-pink);
+        }
+
+        .player-stats {
+            font-size: 0.875rem;
+            color: var(--gray);
+            font-family: 'Space Mono', monospace;
+        }
+
+        .points {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--court-green);
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* Games */
+        .game-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .game-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .game-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .game-status.pending {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .game-status.completed {
+            background: #d4edda;
+            color: var(--success);
+        }
+
+        .teams {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .team {
+            flex: 1;
+            background: var(--light);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .team-label {
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .team-players {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .score-input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .score-input {
+            flex: 1;
+            text-align: center;
+        }
+
+        .score-input label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-bottom: 4px;
+        }
+
+        .score-input input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .vs-separator {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray);
+        }
+
+        /* Player Management */
+        .player-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .player-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .player-row input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--gray-light);
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .gender-toggle {
+            display: flex;
+            gap: 4px;
+        }
+
+        .gender-toggle button {
+            padding: 8px 12px;
+            border: 2px solid var(--gray-light);
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .gender-toggle button.active.male {
+            background: var(--male-blue);
+            color: white;
+            border-color: var(--male-blue);
+        }
+
+        .gender-toggle button.active.female {
+            background: var(--female-pink);
+            color: white;
+            border-color: var(--female-pink);
+        }
+
+        /* Point System */
+        .point-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .point-input {
+            text-align: center;
+        }
+
+        .point-input label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .point-input input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* Summary */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .summary-stat {
+            background: var(--light);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--court-green);
+            font-family: 'Space Mono', monospace;
+        }
+
+        .summary-stat-label {
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+
+        .match-history-item {
+            padding: 12px;
+            background: var(--light);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+        }
+
+        .match-history-item .status-icon {
+            margin-right: 8px;
+            font-weight: 700;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 40px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--gray-light);
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 20px 0 12px;
+            color: var(--dark);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .btn-group button {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <div class="footer">
+        Created by Surya G. · 2026 · Beta Version v0.3
+    </div>
+
+    <script>
+        // State Management
+        let state = {
+            currentView: 'dashboard',
+            currentTournament: null,
+            tournaments: []
+        };
+
+        // Load tournaments from localStorage
+        function loadTournaments() {
+            const stored = localStorage.getItem('americano_tournaments');
+            state.tournaments = stored ? JSON.parse(stored) : [];
+        }
+
+        // Save tournaments to localStorage
+        function saveTournaments() {
+            localStorage.setItem('americano_tournaments', JSON.stringify(state.tournaments));
+        }
+
+        // Initialize app
+        loadTournaments();
+
+        // Tournament Functions
+        function createTournament() {
+            const today = new Date();
+            const tournament = {
+                id: Date.now(),
+                title: 'New Tournament',
+                location: 'Court Location',
+                date: today.toISOString().split('T')[0], // YYYY-MM-DD format
+                startTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                durationHours: 2,
+                americanoType: 'classic',
+                gradingRounds: 4,
+                courtCount: 1,
+                players: [
+                    { id: 1, name: 'Player 1', gender: 'M', grade: null },
+                    { id: 2, name: 'Player 2', gender: 'F', grade: null },
+                    { id: 3, name: 'Player 3', gender: 'M', grade: null },
+                    { id: 4, name: 'Player 4', gender: 'F', grade: null }
+                ],
+                rounds: [],
+                pointSystem: { win: 3, tie: 1, lose: 0 },
+                status: 'ongoing',
+                createdAt: Date.now()
+            };
+            state.tournaments.push(tournament);
+            saveTournaments();
+            state.currentTournament = tournament;
+            state.currentView = 'tournament';
+            render();
+        }
+
+        function loadTournament(id) {
+            state.currentTournament = state.tournaments.find(t => t.id === id);
+            state.currentView = 'tournament';
+            render();
+        }
+
+        function deleteTournament(id) {
+            if (confirm('Are you sure you want to delete this tournament?')) {
+                state.tournaments = state.tournaments.filter(t => t.id !== id);
+                saveTournaments();
+                render();
+            }
+        }
+
+        function updateTournament() {
+            const index = state.tournaments.findIndex(t => t.id === state.currentTournament.id);
+            if (index !== -1) {
+                state.tournaments[index] = state.currentTournament;
+                saveTournaments();
+            }
+        }
+
+        // Americano Logic
+        function shufflePlayers() {
+            const players = [...state.currentTournament.players];
+            for (let i = players.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [players[i], players[j]] = [players[j], players[i]];
+            }
+            state.currentTournament.players = players;
+            updateTournament();
+            render();
+        }
+
+        function generateRound() {
+            const tournament = state.currentTournament;
+            const roundNumber = tournament.rounds.length + 1;
+            
+            if (tournament.americanoType === 'grading' && roundNumber <= tournament.gradingRounds) {
+                // Random pairing for grading rounds
+                return generateRandomRound(roundNumber);
+            } else if (tournament.americanoType === 'grading' && roundNumber > tournament.gradingRounds) {
+                // Grade-based pairing
+                return generateGradedRound(roundNumber);
+            } else {
+                // Classic Americano - fully random
+                return generateRandomRound(roundNumber);
+            }
+        }
+
+        function generateRandomRound(roundNumber) {
+            const players = [...state.currentTournament.players];
+            
+            // Shuffle players
+            for (let i = players.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [players[i], players[j]] = [players[j], players[i]];
+            }
+
+            // Create games (4 players per game)
+            const games = [];
+            for (let i = 0; i < players.length; i += 4) {
+                if (i + 3 < players.length) {
+                    games.push({
+                        id: Date.now() + i,
+                        team1: [players[i], players[i + 1]],
+                        team2: [players[i + 2], players[i + 3]],
+                        score1: null,
+                        score2: null,
+                        status: 'pending'
+                    });
+                }
+            }
+
+            return {
+                id: Date.now(),
+                number: roundNumber,
+                games: games
+            };
+        }
+
+        function generateGradedRound(roundNumber) {
+            // Calculate player stats for grading
+            const playerStats = state.currentTournament.players.map(player => {
+                const stats = calculatePlayerStats(player.id);
+                return {
+                    ...player,
+                    points: stats.points,
+                    wins: stats.wins
+                };
+            });
+
+            // Sort by points and wins
+            playerStats.sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                return b.wins - a.wins;
+            });
+
+            // Divide into tiers
+            const tierSize = Math.ceil(playerStats.length / 3);
+            const topTier = playerStats.slice(0, tierSize);
+            const midTier = playerStats.slice(tierSize, tierSize * 2);
+            const lowTier = playerStats.slice(tierSize * 2);
+
+            // Update grades
+            topTier.forEach(p => {
+                const player = state.currentTournament.players.find(pl => pl.id === p.id);
+                player.grade = 'TOP';
+            });
+            midTier.forEach(p => {
+                const player = state.currentTournament.players.find(pl => pl.id === p.id);
+                player.grade = 'MID';
+            });
+            lowTier.forEach(p => {
+                const player = state.currentTournament.players.find(pl => pl.id === p.id);
+                player.grade = 'LOW';
+            });
+
+            // Create games within tiers
+            const allPlayers = [...topTier, ...midTier, ...lowTier];
+            const games = [];
+            
+            for (let i = 0; i < allPlayers.length; i += 4) {
+                if (i + 3 < allPlayers.length) {
+                    games.push({
+                        id: Date.now() + i,
+                        team1: [allPlayers[i], allPlayers[i + 1]],
+                        team2: [allPlayers[i + 2], allPlayers[i + 3]],
+                        score1: null,
+                        score2: null,
+                        status: 'pending'
+                    });
+                }
+            }
+
+            return {
+                id: Date.now(),
+                number: roundNumber,
+                games: games
+            };
+        }
+
+        function addRound() {
+            const round = generateRound();
+            state.currentTournament.rounds.push(round);
+            updateTournament();
+            render();
+        }
+
+        function updateGameScore(roundId, gameId, score1, score2) {
+            const round = state.currentTournament.rounds.find(r => r.id === roundId);
+            const game = round.games.find(g => g.id === gameId);
+            
+            game.score1 = score1 !== '' && score1 !== null ? parseInt(score1) : null;
+            game.score2 = score2 !== '' && score2 !== null ? parseInt(score2) : null;
+            
+            if (game.score1 !== null && game.score2 !== null) {
+                game.status = 'completed';
+            } else {
+                game.status = 'pending';
+            }
+            
+            updateTournament();
+            render();
+        }
+
+        function deleteRound(roundId) {
+            if (confirm('Delete this round? All scores will be lost.')) {
+                state.currentTournament.rounds = state.currentTournament.rounds.filter(r => r.id !== roundId);
+                // Renumber rounds
+                state.currentTournament.rounds.forEach((round, index) => {
+                    round.number = index + 1;
+                });
+                updateTournament();
+                render();
+            }
+        }
+
+        // Statistics Functions
+        function calculatePlayerStats(playerId) {
+            const stats = { wins: 0, ties: 0, losses: 0, points: 0 };
+            const pointSystem = state.currentTournament.pointSystem;
+
+            state.currentTournament.rounds.forEach(round => {
+                round.games.forEach(game => {
+                    if (game.status !== 'completed') return;
+
+                    const isInTeam1 = game.team1.some(p => p.id === playerId);
+                    const isInTeam2 = game.team2.some(p => p.id === playerId);
+
+                    if (!isInTeam1 && !isInTeam2) return;
+
+                    if (game.score1 > game.score2) {
+                        if (isInTeam1) {
+                            stats.wins++;
+                            stats.points += pointSystem.win;
+                        } else {
+                            stats.losses++;
+                            stats.points += pointSystem.lose;
+                        }
+                    } else if (game.score1 < game.score2) {
+                        if (isInTeam2) {
+                            stats.wins++;
+                            stats.points += pointSystem.win;
+                        } else {
+                            stats.losses++;
+                            stats.points += pointSystem.lose;
+                        }
+                    } else {
+                        stats.ties++;
+                        stats.points += pointSystem.tie;
+                    }
+                });
+            });
+
+            // Add compensation points if exists
+            if (state.currentTournament.compensationPoints && state.currentTournament.compensationPoints[playerId]) {
+                stats.points += state.currentTournament.compensationPoints[playerId].points;
+                stats.compensation = state.currentTournament.compensationPoints[playerId].points;
+            }
+
+            return stats;
+        }
+
+        function getLeaderboard() {
+            return state.currentTournament.players.map(player => ({
+                ...player,
+                stats: calculatePlayerStats(player.id)
+            })).sort((a, b) => {
+                if (b.stats.points !== a.stats.points) {
+                    return b.stats.points - a.stats.points;
+                }
+                if (b.stats.wins !== a.stats.wins) {
+                    return b.stats.wins - a.stats.wins;
+                }
+                return a.stats.losses - b.stats.losses;
+            });
+        }
+
+        // Player Management
+        function addPlayer() {
+            if (state.currentTournament.players.length >= 18) {
+                alert('Maximum 18 players allowed');
+                return;
+            }
+            const newPlayer = {
+                id: Date.now(),
+                name: `Player ${state.currentTournament.players.length + 1}`,
+                gender: 'M',
+                grade: null
+            };
+            state.currentTournament.players.push(newPlayer);
+            updateTournament();
+            render();
+        }
+
+        function updatePlayer(playerId, field, value) {
+            const player = state.currentTournament.players.find(p => p.id === playerId);
+            if (player) {
+                player[field] = value;
+                updateTournament();
+            }
+        }
+
+        function resetTournament() {
+            if (confirm('Reset all rounds and scores? Player data will be kept.')) {
+                state.currentTournament.rounds = [];
+                state.currentTournament.players.forEach(p => p.grade = null);
+                updateTournament();
+                render();
+            }
+        }
+
+        // Render Functions
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (state.currentView === 'dashboard') {
+                app.innerHTML = renderDashboard();
+            } else if (state.currentView === 'tournament') {
+                app.innerHTML = renderTournament();
+            }
+
+            attachEventListeners();
+        }
+
+        function renderDashboard() {
+            const ongoingTournaments = state.tournaments.filter(t => t.status === 'ongoing');
+            const completedTournaments = state.tournaments.filter(t => t.status === 'completed');
+
+            return `
+                <div class="dashboard-header">
+                    <h1>Tennis Americano Score 🎾</h1>
+                    <p>Free, Flexible, Offline Tournament Manager</p>
+                </div>
+
+                <div class="container">
+                    <div class="card">
+                        <button class="btn btn-primary" onclick="createTournament()">
+                            ➕ Create New Tournament
+                        </button>
+                    </div>
+
+                    ${ongoingTournaments.length > 0 ? `
+                        <div class="card">
+                            <h2 style="margin-bottom: 16px; font-size: 1.3rem;">Ongoing Tournaments</h2>
+                            <div>
+                                ${ongoingTournaments.map(t => {
+                                    const durationHours = t.durationHours || 2;
+                                    const courtCount = t.courtCount || 1;
+                                    const xhyc = `${durationHours}H${courtCount}C`;
+                                    
+                                    return `
+                                    <div class="tournament-item" style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="flex: 1;" onclick="loadTournament(${t.id})">
+                                            <h3>
+                                                ${t.title}
+                                                <span class="badge badge-ongoing">LIVE</span>
+                                            </h3>
+                                            <p>${t.location} • ${new Date(t.createdAt).toLocaleDateString()} • ${xhyc}</p>
+                                            <p style="margin-top: 4px; font-size: 0.8rem;">
+                                                ${t.players.length} players • ${t.rounds.length} rounds
+                                            </p>
+                                        </div>
+                                        <button 
+                                            onclick="event.stopPropagation(); deleteTournament(${t.id})"
+                                            style="padding: 8px 12px; border: 2px solid #dc3545; background: white; color: #dc3545; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.2s;"
+                                            onmouseover="this.style.background='#dc3545'; this.style.color='white';"
+                                            onmouseout="this.style.background='white'; this.style.color='#dc3545';"
+                                            title="Delete tournament"
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
+                                `}).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${completedTournaments.length > 0 ? `
+                        <div class="card">
+                            <h2 style="margin-bottom: 16px; font-size: 1.3rem;">Tournament History</h2>
+                            <div>
+                                ${completedTournaments.map(t => `
+                                    <div class="tournament-item" onclick="loadTournament(${t.id})">
+                                        <h3>
+                                            ${t.title}
+                                            <span class="badge badge-completed">COMPLETED</span>
+                                        </h3>
+                                        <p>${t.location} • ${new Date(t.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function renderTournament() {
+            return `
+                <div class="container">
+                    <button class="btn btn-secondary btn-small" onclick="backToDashboard()" style="margin-bottom: 16px;">
+                        ← Back to Dashboard
+                    </button>
+
+                    ${renderTournamentHeader()}
+                    ${renderTabs()}
+                    ${renderTabContent()}
+                </div>
+            `;
+        }
+
+        function renderTournamentHeader() {
+            const t = state.currentTournament;
+            
+            // Ensure all fields exist (backward compatibility)
+            if (!t.durationHours) t.durationHours = 2;
+            if (!t.courtCount) t.courtCount = 1;
+            if (!t.date) t.date = new Date().toISOString().split('T')[0];
+            
+            // Format date for display (DD/MM/YYYY)
+            const dateObj = new Date(t.date + 'T00:00:00');
+            const displayDate = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
+            
+            // Generate info: XHYC format
+            const xhyc = `${t.durationHours}H${t.courtCount}C`;
+            
+            // Americano type display
+            const americanoTypeDisplay = t.americanoType === 'classic' ? 'Classic Americano' : 'Grading Americano';
+            
+            // Player count
+            const playerCount = `${t.players.length} Players`;
+            
+            return `
+                <div class="tournament-header">
+                    <input 
+                        type="text" 
+                        class="editable-title" 
+                        value="${t.title}"
+                        onchange="updateTournamentField('title', this.value)"
+                    />
+                    <div class="subtitle">
+                        <input 
+                            type="text" 
+                            placeholder="Location"
+                            value="${t.location}"
+                            onchange="updateTournamentField('location', this.value)"
+                        />
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                                <label style="font-size: 0.7rem; color: var(--gray); font-weight: 600;">Date</label>
+                                <input 
+                                    type="date" 
+                                    value="${t.date}"
+                                    onchange="updateTournamentField('date', this.value); render();"
+                                    style="padding: 8px 12px; border: none; background: var(--light); border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.875rem; color: var(--gray);"
+                                />
+                            </div>
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                                <label style="font-size: 0.7rem; color: var(--gray); font-weight: 600;">Start Time</label>
+                                <input 
+                                    type="time" 
+                                    value="${t.startTime}"
+                                    onchange="updateTournamentField('startTime', this.value); render();"
+                                    style="padding: 8px 12px; border: none; background: var(--light); border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.875rem; color: var(--gray);"
+                                />
+                            </div>
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                                <label style="font-size: 0.7rem; color: var(--gray); font-weight: 600;">Duration</label>
+                                <select 
+                                    onchange="updateTournamentField('durationHours', parseInt(this.value)); render();"
+                                    style="padding: 8px 12px; border: none; background: var(--light); border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.875rem; color: var(--gray);"
+                                >
+                                    ${[1,2,3,4,5,6,7,8].map(h => `
+                                        <option value="${h}" ${t.durationHours === h ? 'selected' : ''}>${h}h</option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, var(--court-green), #3d7021); padding: 10px 12px; border-radius: 6px; text-align: center;">
+                            <span style="font-size: 0.8rem; font-weight: 600; color: white; font-family: 'Space Mono', monospace;">
+                                📅 ${displayDate} • ${xhyc} • ${americanoTypeDisplay} • ${playerCount}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTabs() {
+            const tabs = ['Leaderboard', 'Games', 'Summary', 'Settings'];
+            const currentTab = state.currentTab || 'Leaderboard';
+
+            return `
+                <div class="tabs">
+                    ${tabs.map(tab => `
+                        <button 
+                            class="tab ${currentTab === tab ? 'active' : ''}"
+                            onclick="switchTab('${tab}')"
+                        >
+                            ${tab}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderTabContent() {
+            const currentTab = state.currentTab || 'Leaderboard';
+
+            switch(currentTab) {
+                case 'Leaderboard':
+                    return renderLeaderboard();
+                case 'Games':
+                    return renderGames();
+                case 'Summary':
+                    return renderSummary();
+                case 'Settings':
+                    return renderSettings();
+                default:
+                    return '';
+            }
+        }
+
+        function completeTournament() {
+            if (confirm('Mark this tournament as completed? You can still view it in Tournament History.')) {
+                state.currentTournament.status = 'completed';
+                updateTournament();
+                alert('Tournament completed! 🏆');
+                backToDashboard();
+            }
+        }
+
+        function toggleRoundSort() {
+            state.roundsSortReversed = !state.roundsSortReversed;
+            render();
+        }
+
+        function renderLeaderboard() {
+            const leaderboard = getLeaderboard();
+            
+            return `
+                <div class="card">
+                    <h2 style="margin-bottom: 20px; font-size: 1.5rem; text-align: center;">🏆 Campeones! 🏆</h2>
+                    ${leaderboard.length > 0 ? leaderboard.map((player, index) => `
+                        <div class="leaderboard-item">
+                            <div class="rank ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}">
+                                ${index + 1}
+                            </div>
+                            <div class="player-info">
+                                <div class="player-name">
+                                    <span class="gender-badge ${player.gender === 'M' ? 'male' : 'female'}">
+                                        ${player.gender}
+                                    </span>
+                                    ${player.name}
+                                    ${player.grade ? `<span style="font-size: 0.75rem; color: var(--gray);">(${player.grade})</span>` : ''}
+                                    ${player.stats.compensation ? `<span style="font-size: 0.7rem; color: #ff6b35; margin-left: 4px;" title="Includes ${player.stats.compensation} compensation points">💰</span>` : ''}
+                                </div>
+                                <div class="player-stats">
+                                    ${player.stats.wins}W–${player.stats.ties}T–${player.stats.losses}L
+                                    ${player.stats.compensation ? `<span style="font-size: 0.7rem; color: var(--gray);"> (+${player.stats.compensation})</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="points">${player.stats.points}</div>
+                        </div>
+                    `).join('') : '<p style="text-align: center; color: var(--gray);">No games completed yet</p>'}
+                    
+                    <button 
+                        class="btn btn-primary" 
+                        onclick="completeTournament()"
+                        style="margin-top: 24px; background: linear-gradient(135deg, #28a745, #20c997); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);"
+                    >
+                        ✔️ Complete Tournament
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderGames() {
+            let rounds = [...state.currentTournament.rounds];
+            
+            // Apply sorting if reversed
+            if (state.roundsSortReversed) {
+                rounds = rounds.reverse();
+            }
+            
+            return `
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <button class="btn btn-primary" onclick="addRound()" style="flex: 1;">
+                        ➕ Add Round
+                    </button>
+                    <button 
+                        class="btn btn-secondary" 
+                        onclick="toggleRoundSort()" 
+                        style="width: 48px; height: 48px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;"
+                    >
+                        ${state.roundsSortReversed ? '⬆️' : '⬇️'}
+                    </button>
+                </div>
+
+                ${rounds.length > 0 ? rounds.map(round => `
+                    <div class="card">
+                        <div class="game-header">
+                            <div class="game-title">Round ${round.number}</div>
+                            <button 
+                                class="btn btn-danger btn-small" 
+                                onclick="deleteRound(${round.id})"
+                                style="padding: 6px 12px; font-size: 0.75rem;"
+                            >
+                                🗑️ Delete
+                            </button>
+                        </div>
+                        ${round.games.map(game => {
+                            const isEditing = state.editingGame === game.id;
+                            return `
+                            <div style="margin-bottom: 16px; padding: 12px; background: var(--light); border-radius: 8px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span class="game-status ${game.status}">
+                                        ${game.status === 'completed' ? '✓ Completed' : '⏳ Pending'}
+                                    </span>
+                                </div>
+                                <div class="teams">
+                                    <div class="team">
+                                        <div class="team-label">Team 1</div>
+                                        <div class="team-players">
+                                            ${game.team1.map(p => `
+                                                <span class="gender-badge ${p.gender === 'M' ? 'male' : 'female'}" style="width: 18px; height: 18px; font-size: 0.65rem;">${p.gender}</span>
+                                                ${p.name}
+                                            `).join(' & ')}
+                                        </div>
+                                    </div>
+                                    <div class="team">
+                                        <div class="team-label">Team 2</div>
+                                        <div class="team-players">
+                                            ${game.team2.map(p => `
+                                                <span class="gender-badge ${p.gender === 'M' ? 'male' : 'female'}" style="width: 18px; height: 18px; font-size: 0.65rem;">${p.gender}</span>
+                                                ${p.name}
+                                            `).join(' & ')}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                ${isEditing || game.status === 'pending' ? `
+                                    <div class="score-input-group" style="margin-top: 12px;">
+                                        <div class="score-input">
+                                            <label>Team 1 Score</label>
+                                            <input 
+                                                type="number" 
+                                                min="0"
+                                                value="${game.score1 !== null ? game.score1 : ''}"
+                                                id="score1_${game.id}"
+                                            />
+                                        </div>
+                                        <div class="vs-separator">:</div>
+                                        <div class="score-input">
+                                            <label>Team 2 Score</label>
+                                            <input 
+                                                type="number" 
+                                                min="0"
+                                                value="${game.score2 !== null ? game.score2 : ''}"
+                                                id="score2_${game.id}"
+                                            />
+                                        </div>
+                                    </div>
+                                    <button 
+                                        class="btn btn-primary" 
+                                        onclick="submitGameScore(${round.id}, ${game.id})"
+                                        style="margin-top: 12px; width: 100%;"
+                                    >
+                                        💾 ${game.status === 'completed' ? 'Update Score' : 'Submit Score'}
+                                    </button>
+                                ` : `
+                                    <div style="margin-top: 12px; text-align: center; background: white; padding: 16px; border-radius: 8px;">
+                                        <div style="font-size: 2rem; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--court-green); margin-bottom: 8px;">
+                                            ${game.score1} : ${game.score2}
+                                        </div>
+                                        <button 
+                                            class="btn btn-secondary btn-small" 
+                                            onclick="enableEditScore(${game.id})"
+                                            style="width: 100%;"
+                                        >
+                                            ✏️ Edit Score
+                                        </button>
+                                    </div>
+                                `}
+                            </div>
+                        `}).join('')}
+                    </div>
+                `).join('') : '<div class="card"><p style="text-align: center; color: var(--gray);">No rounds yet. Click "Add Round" to start!</p></div>'}
+            `;
+        }
+
+        function submitGameScore(roundId, gameId) {
+            const score1Input = document.getElementById(`score1_${gameId}`);
+            const score2Input = document.getElementById(`score2_${gameId}`);
+            
+            const score1 = score1Input.value;
+            const score2 = score2Input.value;
+            
+            if (score1 === '' || score2 === '') {
+                alert('Please enter both scores');
+                return;
+            }
+            
+            updateGameScore(roundId, gameId, score1, score2);
+            state.editingGame = null;
+        }
+
+        function enableEditScore(gameId) {
+            state.editingGame = gameId;
+            render();
+        }
+
+        function getPlayerRoundParticipation() {
+            const t = state.currentTournament;
+            const participation = {};
+
+            // Initialize participation tracking
+            t.players.forEach(player => {
+                participation[player.id] = {
+                    player: player,
+                    completedRounds: 0,
+                    pendingRounds: 0,
+                    totalRounds: 0,
+                    rounds: []
+                };
+            });
+
+            // Track which rounds each player participated in
+            t.rounds.forEach(round => {
+                round.games.forEach(game => {
+                    const allPlayers = [...game.team1, ...game.team2];
+                    allPlayers.forEach(player => {
+                        if (participation[player.id]) {
+                            participation[player.id].totalRounds++;
+                            participation[player.id].rounds.push({
+                                roundNumber: round.number,
+                                status: game.status,
+                                result: game.status === 'completed' ? getPlayerGameResult(player.id, game) : null
+                            });
+                            
+                            if (game.status === 'completed') {
+                                participation[player.id].completedRounds++;
+                            } else {
+                                participation[player.id].pendingRounds++;
+                            }
+                        }
+                    });
+                });
+            });
+
+            return participation;
+        }
+
+        function getPlayerGameResult(playerId, game) {
+            const isInTeam1 = game.team1.some(p => p.id === playerId);
+            const isInTeam2 = game.team2.some(p => p.id === playerId);
+
+            if (!isInTeam1 && !isInTeam2) return null;
+
+            if (game.score1 > game.score2) {
+                return isInTeam1 ? 'W' : 'L';
+            } else if (game.score1 < game.score2) {
+                return isInTeam2 ? 'W' : 'L';
+            } else {
+                return 'T';
+            }
+        }
+
+        function getRoundBalanceAnalysis() {
+            const participation = getPlayerRoundParticipation();
+            const roundCounts = Object.values(participation).map(p => p.completedRounds);
+            const maxRounds = Math.max(...roundCounts, 0);
+            const minRounds = Math.min(...roundCounts, maxRounds);
+            const avgRounds = roundCounts.length > 0 ? (roundCounts.reduce((a, b) => a + b, 0) / roundCounts.length).toFixed(1) : 0;
+
+            const imbalanced = maxRounds - minRounds > 2;
+            const playersNeedingCompensation = Object.values(participation)
+                .filter(p => p.completedRounds < maxRounds - 1)
+                .map(p => ({
+                    ...p,
+                    missingRounds: maxRounds - p.completedRounds,
+                    compensationPoints: 0
+                }));
+
+            return {
+                maxRounds,
+                minRounds,
+                avgRounds,
+                imbalanced,
+                playersNeedingCompensation,
+                participation
+            };
+        }
+
+        function applyAutoCompensation() {
+            const t = state.currentTournament;
+            const analysis = getRoundBalanceAnalysis();
+            
+            if (!analysis.imbalanced) {
+                alert('Tournament is already balanced! No compensation needed.');
+                return;
+            }
+
+            // Initialize compensation points if not exists
+            if (!t.compensationPoints) {
+                t.compensationPoints = {};
+            }
+
+            const avgPointsPerRound = t.pointSystem.win * 0.5 + t.pointSystem.tie * 0.3 + t.pointSystem.lose * 0.2;
+
+            analysis.playersNeedingCompensation.forEach(playerData => {
+                const compensation = Math.round(playerData.missingRounds * avgPointsPerRound);
+                t.compensationPoints[playerData.player.id] = {
+                    points: compensation,
+                    reason: `Auto-compensation for ${playerData.missingRounds} missing round(s)`,
+                    type: 'auto'
+                };
+            });
+
+            updateTournament();
+            render();
+            alert(`Auto-compensation applied to ${analysis.playersNeedingCompensation.length} player(s)!`);
+        }
+
+        function updateManualCompensation(playerId, points, reason) {
+            const t = state.currentTournament;
+            if (!t.compensationPoints) {
+                t.compensationPoints = {};
+            }
+
+            if (points === 0 || points === '') {
+                delete t.compensationPoints[playerId];
+            } else {
+                t.compensationPoints[playerId] = {
+                    points: parseInt(points),
+                    reason: reason || 'Manual adjustment',
+                    type: 'manual'
+                };
+            }
+
+            updateTournament();
+            render();
+        }
+
+        function clearAllCompensation() {
+            if (confirm('Clear all compensation points?')) {
+                state.currentTournament.compensationPoints = {};
+                updateTournament();
+                render();
+            }
+        }
+
+        function renderSummary() {
+            const t = state.currentTournament;
+            const completedRounds = t.rounds.filter(r => r.games.every(g => g.status === 'completed')).length;
+            const pendingRounds = t.rounds.length - completedRounds;
+            const leaderboard = getLeaderboard();
+            const analysis = getRoundBalanceAnalysis();
+            const participation = analysis.participation;
+
+            return `
+                <div class="card">
+                    <h2 style="margin-bottom: 20px; font-size: 1.5rem; text-align: center;">📊 Tournament Summary</h2>
+                    
+                    <div class="summary-grid">
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${t.players.length}</div>
+                            <div class="summary-stat-label">Total Players</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${t.rounds.length}</div>
+                            <div class="summary-stat-label">Total Rounds</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${completedRounds}</div>
+                            <div class="summary-stat-label">Completed</div>
+                        </div>
+                        <div class="summary-stat">
+                            <div class="summary-stat-value">${pendingRounds}</div>
+                            <div class="summary-stat-label">Pending</div>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">👥 Player Analysis</h3>
+                    ${leaderboard.length > 0 ? `
+                        <div style="background: white; border-radius: 12px; overflow: hidden; border: 2px solid var(--gray-light);">
+                            ${leaderboard.map((player, index) => {
+                                const playerParticipation = participation[player.id];
+                                const needsCompensation = playerParticipation.completedRounds < analysis.maxRounds - 1;
+                                
+                                return `
+                                <div style="border-bottom: 1px solid var(--gray-light); ${index === leaderboard.length - 1 ? 'border-bottom: none;' : ''}">
+                                    <div style="display: flex; align-items: center; padding: 12px 16px; ${needsCompensation ? 'background: #fff3cd;' : ''}">
+                                        <div class="rank ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}" style="width: 35px; font-size: 1rem;">
+                                            ${index + 1}
+                                        </div>
+                                        <div style="flex: 1; padding: 0 12px;">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span class="gender-badge ${player.gender === 'M' ? 'male' : 'female'}" style="width: 20px; height: 20px; font-size: 0.65rem;">
+                                                    ${player.gender}
+                                                </span>
+                                                <strong style="font-size: 0.95rem;">${player.name}</strong>
+                                                ${needsCompensation ? '<span style="font-size: 0.7rem; color: #856404; margin-left: 4px;">⚠️</span>' : ''}
+                                            </div>
+                                        </div>
+                                        <div style="text-align: center; margin-right: 12px;">
+                                            <div style="font-size: 0.95rem; font-weight: 700; font-family: 'Space Mono', monospace; color: ${needsCompensation ? '#856404' : 'var(--court-green)'};">
+                                                ${playerParticipation.completedRounds}/${analysis.maxRounds}
+                                            </div>
+                                            <div style="font-size: 0.65rem; color: var(--gray);">rounds</div>
+                                        </div>
+                                        <button 
+                                            class="btn btn-secondary btn-small" 
+                                            onclick="togglePlayerAnalysis(${player.id})"
+                                            style="padding: 6px 12px; font-size: 0.75rem;"
+                                        >
+                                            📊
+                                        </button>
+                                    </div>
+                                    
+                                    ${state.expandedPlayerId === player.id ? `
+                                        <div style="padding: 16px; background: var(--light); border-top: 1px solid var(--gray-light);">
+                                            <h4 style="font-size: 0.9rem; margin-bottom: 12px; color: var(--dark);">📊 Match History</h4>
+                                            
+                                            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                                                ${playerParticipation.rounds.map(r => `
+                                                    <span style="
+                                                        display: inline-block;
+                                                        padding: 4px 8px;
+                                                        border-radius: 6px;
+                                                        font-size: 0.7rem;
+                                                        font-weight: 600;
+                                                        font-family: 'Space Mono', monospace;
+                                                        background: ${r.status === 'completed' 
+                                                            ? (r.result === 'W' ? '#d4edda' : r.result === 'L' ? '#f8d7da' : '#fff3cd')
+                                                            : '#e9ecef'};
+                                                        color: ${r.status === 'completed'
+                                                            ? (r.result === 'W' ? '#155724' : r.result === 'L' ? '#721c24' : '#856404')
+                                                            : '#6c757d'};
+                                                    ">
+                                                        R${r.roundNumber}${r.status === 'completed' ? ` ${r.result}` : ' ⏳'}
+                                                    </span>
+                                                `).join('')}
+                                            </div>
+
+                                            ${needsCompensation || (t.compensationPoints && t.compensationPoints[player.id]) ? `
+                                                <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 12px; border: 2px solid #ffc107;">
+                                                    <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; color: var(--dark);">
+                                                        💰 Compensation Points
+                                                    </div>
+                                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                                        <input 
+                                                            type="number" 
+                                                            value="${t.compensationPoints && t.compensationPoints[player.id] ? t.compensationPoints[player.id].points : 0}"
+                                                            onchange="updateManualCompensation(${player.id}, this.value, this.nextElementSibling.value)"
+                                                            style="flex: 1; padding: 8px; border: 2px solid var(--gray-light); border-radius: 6px; font-family: 'Space Mono', monospace; font-weight: 700;"
+                                                            placeholder="0"
+                                                        />
+                                                        <input 
+                                                            type="text" 
+                                                            value="${t.compensationPoints && t.compensationPoints[player.id] ? t.compensationPoints[player.id].reason : ''}"
+                                                            onchange="updateManualCompensation(${player.id}, this.previousElementSibling.value, this.value)"
+                                                            style="flex: 2; padding: 8px; border: 2px solid var(--gray-light); border-radius: 6px; font-size: 0.875rem;"
+                                                            placeholder="Reason (optional)"
+                                                        />
+                                                    </div>
+                                                    ${t.compensationPoints && t.compensationPoints[player.id] ? `
+                                                        <div style="font-size: 0.75rem; color: var(--gray); margin-top: 4px;">
+                                                            ${t.compensationPoints[player.id].type === 'auto' ? '🤖 Auto-calculated' : '✏️ Manual entry'}
+                                                        </div>
+                                                    ` : ''}
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `}).join('')}
+                        </div>
+                    ` : '<p style="text-align: center; color: var(--gray); padding: 20px;">No completed games yet</p>'}
+
+                    ${analysis.imbalanced ? `
+                        <div style="background: #fff3cd; padding: 16px; border-radius: 12px; margin-top: 16px; border: 2px solid #ffc107;">
+                            <div style="font-weight: 600; margin-bottom: 8px; color: #856404;">
+                                ⚠️ Round Imbalance Detected
+                            </div>
+                            <div style="font-size: 0.875rem; color: #856404; margin-bottom: 12px;">
+                                ${analysis.playersNeedingCompensation.length} player(s) have significantly fewer rounds (Range: ${analysis.minRounds}-${analysis.maxRounds})
+                            </div>
+                            <button class="btn btn-primary btn-small" onclick="applyAutoCompensation()" style="width: 100%;">
+                                🤖 Apply Auto-Compensation
+                            </button>
+                        </div>
+                    ` : ''}
+
+                    ${t.compensationPoints && Object.keys(t.compensationPoints).length > 0 ? `
+                        <button class="btn btn-danger btn-small" onclick="clearAllCompensation()" style="width: 100%; margin-top: 12px;">
+                            🗑️ Clear All Compensation
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function togglePlayerAnalysis(playerId) {
+            if (state.expandedPlayerId === playerId) {
+                state.expandedPlayerId = null;
+            } else {
+                state.expandedPlayerId = playerId;
+            }
+            render();
+        }
+
+        function togglePlayerGender(playerId) {
+            const player = state.currentTournament.players.find(p => p.id === playerId);
+            if (player) {
+                player.gender = player.gender === 'M' ? 'F' : 'M';
+                updateTournament();
+                render();
+            }
+        }
+
+        function deletePlayer(playerId) {
+            if (state.currentTournament.players.length <= 4) {
+                alert('Minimum 4 players required!');
+                return;
+            }
+            
+            if (confirm('Delete this player? This cannot be undone.')) {
+                state.currentTournament.players = state.currentTournament.players.filter(p => p.id !== playerId);
+                updateTournament();
+                render();
+            }
+        }
+
+        function renderSettings() {
+            const t = state.currentTournament;
+            const hasRounds = t.rounds.length > 0;
+            
+            // Ensure courtCount exists (for backward compatibility)
+            if (!t.courtCount) {
+                t.courtCount = 1;
+            }
+
+            return `
+                <div class="card">
+                    <h2 class="section-title">⚙️ Tournament Settings</h2>
+
+                    <h3 style="font-size: 1rem; margin-bottom: 8px;">🎾 Number of Courts</h3>
+                    <select onchange="updateTournamentField('courtCount', parseInt(this.value)); render();" style="margin-bottom: 20px;">
+                        <option value="1" ${t.courtCount === 1 ? 'selected' : ''}>1 Court</option>
+                        <option value="2" ${t.courtCount === 2 ? 'selected' : ''}>2 Courts</option>
+                        <option value="3" ${t.courtCount === 3 ? 'selected' : ''}>3 Courts</option>
+                        <option value="4" ${t.courtCount === 4 ? 'selected' : ''}>4 Courts</option>
+                    </select>
+
+                    ${!hasRounds ? `
+                        <h3 style="font-size: 1rem; margin-bottom: 8px;">Americano Type</h3>
+                        <select onchange="updateTournamentField('americanoType', this.value)">
+                            <option value="classic" ${t.americanoType === 'classic' ? 'selected' : ''}>Classic Americano</option>
+                            <option value="grading" ${t.americanoType === 'grading' ? 'selected' : ''}>Grading Americano</option>
+                        </select>
+
+                        ${t.americanoType === 'grading' ? `
+                            <div style="margin-bottom: 20px;">
+                                <label style="font-size: 0.875rem; color: var(--gray);">Grading Rounds (default 4)</label>
+                                <input 
+                                    type="number" 
+                                    min="2" 
+                                    max="10"
+                                    value="${t.gradingRounds}"
+                                    onchange="updateTournamentField('gradingRounds', parseInt(this.value))"
+                                    style="width: 100%; padding: 10px; border: 2px solid var(--gray-light); border-radius: 8px; margin-top: 4px;"
+                                />
+                            </div>
+                        ` : ''}
+
+                        <button class="btn btn-primary" onclick="shufflePlayers()">
+                            🔀 Shuffle Players
+                        </button>
+                    ` : ''}
+
+                    <h3 class="section-title">👥 Players (${t.players.length}/18)</h3>
+                    <div class="player-list">
+                        ${t.players.map(player => `
+                            <div class="player-row">
+                                <input 
+                                    type="text" 
+                                    value="${player.name}"
+                                    onchange="updatePlayer(${player.id}, 'name', this.value)"
+                                />
+                                <button 
+                                    onclick="togglePlayerGender(${player.id})"
+                                    class="gender-badge ${player.gender === 'M' ? 'male' : 'female'}"
+                                    style="width: 32px; height: 32px; border: none; cursor: pointer; transition: all 0.2s; font-size: 0.75rem; font-weight: 700;"
+                                    title="Click to toggle gender"
+                                >
+                                    ${player.gender}
+                                </button>
+                                <button 
+                                    onclick="deletePlayer(${player.id})"
+                                    style="padding: 8px 10px; border: 2px solid #dc3545; background: white; color: #dc3545; border-radius: 6px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;"
+                                    onmouseover="this.style.background='#dc3545'; this.style.color='white';"
+                                    onmouseout="this.style.background='white'; this.style.color='#dc3545';"
+                                    title="Delete player"
+                                >
+                                    🗑️
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    ${t.players.length < 18 ? `
+                        <button class="btn btn-secondary" onclick="addPlayer()" style="margin-top: 12px;">
+                            ➕ Add Player
+                        </button>
+                    ` : ''}
+
+                    <h3 class="section-title">🎯 Point System</h3>
+                    <div class="point-inputs">
+                        <div class="point-input">
+                            <label>Win</label>
+                            <input 
+                                type="number" 
+                                min="0"
+                                value="${t.pointSystem.win}"
+                                onchange="updatePointSystem('win', parseInt(this.value))"
+                            />
+                        </div>
+                        <div class="point-input">
+                            <label>Tie</label>
+                            <input 
+                                type="number" 
+                                min="0"
+                                value="${t.pointSystem.tie}"
+                                onchange="updatePointSystem('tie', parseInt(this.value))"
+                            />
+                        </div>
+                        <div class="point-input">
+                            <label>Lose</label>
+                            <input 
+                                type="number" 
+                                min="0"
+                                value="${t.pointSystem.lose}"
+                                onchange="updatePointSystem('lose', parseInt(this.value))"
+                            />
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">🔧 Actions</h3>
+                    <button class="btn btn-danger" onclick="resetTournament()">
+                        🔄 Reset Tournament
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteTournament(${t.id}); backToDashboard();" style="margin-top: 8px;">
+                        🗑️ Delete Tournament
+                    </button>
+                </div>
+            `;
+        }
+
+        // Event Handlers
+        function backToDashboard() {
+            state.currentView = 'dashboard';
+            state.currentTournament = null;
+            state.currentTab = null;
+            render();
+        }
+
+        function switchTab(tab) {
+            state.currentTab = tab;
+            render();
+        }
+
+        function updateTournamentField(field, value) {
+            state.currentTournament[field] = value;
+            updateTournament();
+        }
+
+        function updatePointSystem(field, value) {
+            state.currentTournament.pointSystem[field] = value;
+            updateTournament();
+            render();
+        }
+
+        function attachEventListeners() {
+            // Event listeners are attached inline via onclick attributes
+            // This function is kept for compatibility
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
