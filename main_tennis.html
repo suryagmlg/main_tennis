@@ -636,7 +636,8 @@
         let state = {
             currentView: 'dashboard',
             currentTournament: null,
-            tournaments: []
+            tournaments: [],
+            roundsSortReversed: true  // Default to reversed (newest first)
         };
 
         // Load tournaments from localStorage
@@ -864,7 +865,7 @@
 
         // Statistics Functions
         function calculatePlayerStats(playerId) {
-            const stats = { wins: 0, ties: 0, losses: 0, points: 0 };
+            const stats = { wins: 0, ties: 0, losses: 0, points: 0, pointsFor: 0, pointsAgainst: 0, diff: 0 };
             const pointSystem = state.currentTournament.pointSystem;
 
             state.currentTournament.rounds.forEach(round => {
@@ -876,6 +877,16 @@
 
                     if (!isInTeam1 && !isInTeam2) return;
 
+                    // Calculate points for and against
+                    if (isInTeam1) {
+                        stats.pointsFor += game.score1;
+                        stats.pointsAgainst += game.score2;
+                    } else {
+                        stats.pointsFor += game.score2;
+                        stats.pointsAgainst += game.score1;
+                    }
+
+                    // Calculate W-T-L and total points
                     if (game.score1 > game.score2) {
                         if (isInTeam1) {
                             stats.wins++;
@@ -899,6 +910,9 @@
                 });
             });
 
+            // Calculate diff (point difference)
+            stats.diff = stats.pointsFor - stats.pointsAgainst;
+
             // Add compensation points if exists
             if (state.currentTournament.compensationPoints && state.currentTournament.compensationPoints[playerId]) {
                 stats.points += state.currentTournament.compensationPoints[playerId].points;
@@ -913,12 +927,19 @@
                 ...player,
                 stats: calculatePlayerStats(player.id)
             })).sort((a, b) => {
+                // Sort by points first
                 if (b.stats.points !== a.stats.points) {
                     return b.stats.points - a.stats.points;
                 }
+                // If points are equal, sort by diff (point difference)
+                if (b.stats.diff !== a.stats.diff) {
+                    return b.stats.diff - a.stats.diff;
+                }
+                // If diff is also equal, sort by wins
                 if (b.stats.wins !== a.stats.wins) {
                     return b.stats.wins - a.stats.wins;
                 }
+                // Finally sort by losses (ascending)
                 return a.stats.losses - b.stats.losses;
             });
         }
@@ -1093,41 +1114,32 @@
                             value="${t.location}"
                             onchange="updateTournamentField('location', this.value)"
                         />
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
                                 <label style="font-size: 0.7rem; color: var(--gray); font-weight: 600;">Date</label>
                                 <input 
                                     type="date" 
                                     value="${t.date}"
                                     onchange="updateTournamentField('date', this.value); render();"
-                                    style="padding: 8px 12px; border: none; background: var(--light); border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.875rem; color: var(--gray);"
+                                    style="padding: 8px; border: none; background: var(--light); border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.8rem; color: var(--gray); width: 100%;"
                                 />
                             </div>
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
                                 <label style="font-size: 0.7rem; color: var(--gray); font-weight: 600;">Start Time</label>
                                 <input 
                                     type="time" 
                                     value="${t.startTime}"
                                     onchange="updateTournamentField('startTime', this.value); render();"
-                                    style="padding: 8px 12px; border: none; background: var(--light); border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.875rem; color: var(--gray);"
+                                    style="padding: 8px; border: none; background: var(--light); border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.8rem; color: var(--gray); width: 100%;"
                                 />
                             </div>
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                                <label style="font-size: 0.7rem; color: var(--gray); font-weight: 600;">Duration</label>
-                                <select 
-                                    onchange="updateTournamentField('durationHours', parseInt(this.value)); render();"
-                                    style="padding: 8px 12px; border: none; background: var(--light); border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.875rem; color: var(--gray);"
-                                >
-                                    ${[1,2,3,4,5,6,7,8].map(h => `
-                                        <option value="${h}" ${t.durationHours === h ? 'selected' : ''}>${h}h</option>
-                                    `).join('')}
-                                </select>
-                            </div>
                         </div>
-                        <div style="background: linear-gradient(135deg, var(--court-green), #3d7021); padding: 10px 12px; border-radius: 6px; text-align: center;">
-                            <span style="font-size: 0.8rem; font-weight: 600; color: white; font-family: 'Space Mono', monospace;">
-                                📅 ${displayDate} • ${xhyc} • ${americanoTypeDisplay} • ${playerCount}
-                            </span>
+                        <div style="background: linear-gradient(135deg, var(--court-green), #3d7021); padding: 10px 8px; border-radius: 6px; text-align: center; overflow: hidden;">
+                            <div style="font-size: 0.7rem; font-weight: 600; color: white; font-family: 'Space Mono', monospace; line-height: 1.4; word-break: break-word;">
+                                📅 ${displayDate}<br/>
+                                ${xhyc} • ${americanoTypeDisplay}<br/>
+                                ${playerCount}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1169,18 +1181,134 @@
             }
         }
 
-        function completeTournament() {
-            if (confirm('Mark this tournament as completed? You can still view it in Tournament History.')) {
-                state.currentTournament.status = 'completed';
-                updateTournament();
-                alert('Tournament completed! 🏆');
-                backToDashboard();
-            }
-        }
-
         function toggleRoundSort() {
             state.roundsSortReversed = !state.roundsSortReversed;
             render();
+        }
+
+        function shareLeaderboard() {
+            // Get the leaderboard data
+            const t = state.currentTournament;
+            const leaderboard = getLeaderboard();
+            
+            // Format date
+            const dateObj = new Date(t.date + 'T00:00:00');
+            const displayDate = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
+            
+            // Create canvas - Mobile optimized size
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size for mobile (9:20 ratio)
+            canvas.width = 720;
+            const rowHeight = 70;
+            const headerHeight = 180;
+            const footerHeight = 80;
+            canvas.height = Math.min(1600, headerHeight + (leaderboard.length * rowHeight) + footerHeight);
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Header
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 48px Outfit, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🏆 ' + t.title + ' 🏆', canvas.width / 2, 60);
+            
+            ctx.font = '24px Outfit, sans-serif';
+            ctx.fillText(`${t.location} • ${displayDate}`, canvas.width / 2, 100);
+            ctx.fillText(`${t.americanoType === 'classic' ? 'Classic' : 'Grading'} Americano • ${t.players.length} Players`, canvas.width / 2, 135);
+            
+            // Leaderboard background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(30, headerHeight, canvas.width - 60, leaderboard.length * rowHeight);
+            
+            // Table header
+            ctx.fillStyle = '#2d5016';
+            ctx.fillRect(30, headerHeight, canvas.width - 60, rowHeight);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 24px Outfit, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Rank', 60, headerHeight + 45);
+            ctx.fillText('Player', 160, headerHeight + 45);
+            ctx.textAlign = 'center';
+            ctx.fillText('W-T-L', 430, headerHeight + 45);
+            ctx.fillText('Diff', 540, headerHeight + 45);
+            ctx.fillText('Pts', 630, headerHeight + 45);
+            
+            // Draw leaderboard rows
+            leaderboard.forEach((player, index) => {
+                const y = headerHeight + rowHeight + (index * rowHeight);
+                
+                // Alternating row colors
+                if (index % 2 === 0) {
+                    ctx.fillStyle = '#f8f9fa';
+                    ctx.fillRect(30, y, canvas.width - 60, rowHeight);
+                }
+                
+                // Rank
+                ctx.fillStyle = index === 0 ? '#ffd700' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : '#6c757d';
+                ctx.font = 'bold 36px Space Mono, monospace';
+                ctx.textAlign = 'left';
+                ctx.fillText((index + 1).toString(), 60, y + 46);
+                
+                // Gender badge
+                ctx.fillStyle = player.gender === 'M' ? '#4a90e2' : '#e91e63';
+                ctx.beginPath();
+                ctx.arc(145, y + 35, 16, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 18px Outfit, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(player.gender, 145, y + 41);
+                
+                // Player name
+                ctx.fillStyle = '#1a1a1a';
+                ctx.font = 'bold 28px Outfit, sans-serif';
+                ctx.textAlign = 'left';
+                const maxNameWidth = 240;
+                let playerName = player.name;
+                ctx.fillText(playerName.length > 15 ? playerName.substring(0, 15) + '...' : playerName, 170, y + 44);
+                
+                // W-T-L
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '22px Space Mono, monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${player.stats.wins}-${player.stats.ties}-${player.stats.losses}`, 430, y + 44);
+                
+                // Diff
+                ctx.fillStyle = player.stats.diff >= 0 ? '#28a745' : '#dc3545';
+                ctx.font = 'bold 26px Space Mono, monospace';
+                ctx.fillText(player.stats.diff >= 0 ? `+${player.stats.diff}` : player.stats.diff.toString(), 540, y + 44);
+                
+                // Points
+                ctx.fillStyle = '#2d5016';
+                ctx.font = 'bold 32px Space Mono, monospace';
+                ctx.fillText(player.stats.points.toString(), 630, y + 44);
+            });
+            
+            // Footer
+            const footerY = headerHeight + (leaderboard.length * rowHeight) + 50;
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Outfit, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Created by SG 2026', canvas.width / 2, footerY);
+            
+            // Convert to blob and download
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${t.title.replace(/\s+/g, '_')}_Leaderboard.png`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
         }
 
         function renderLeaderboard() {
@@ -1188,37 +1316,75 @@
             
             return `
                 <div class="card">
-                    <h2 style="margin-bottom: 20px; font-size: 1.5rem; text-align: center;">🏆 Campeones! 🏆</h2>
-                    ${leaderboard.length > 0 ? leaderboard.map((player, index) => `
-                        <div class="leaderboard-item">
-                            <div class="rank ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}">
-                                ${index + 1}
-                            </div>
-                            <div class="player-info">
-                                <div class="player-name">
-                                    <span class="gender-badge ${player.gender === 'M' ? 'male' : 'female'}">
-                                        ${player.gender}
-                                    </span>
-                                    ${player.name}
-                                    ${player.grade ? `<span style="font-size: 0.75rem; color: var(--gray);">(${player.grade})</span>` : ''}
-                                    ${player.stats.compensation ? `<span style="font-size: 0.7rem; color: #ff6b35; margin-left: 4px;" title="Includes ${player.stats.compensation} compensation points">💰</span>` : ''}
-                                </div>
-                                <div class="player-stats">
-                                    ${player.stats.wins}W–${player.stats.ties}T–${player.stats.losses}L
-                                    ${player.stats.compensation ? `<span style="font-size: 0.7rem; color: var(--gray);"> (+${player.stats.compensation})</span>` : ''}
-                                </div>
-                            </div>
-                            <div class="points">${player.stats.points}</div>
-                        </div>
-                    `).join('') : '<p style="text-align: center; color: var(--gray);">No games completed yet</p>'}
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="font-size: 1.5rem; text-align: center; flex: 1;">🏆 Campeones! 🏆</h2>
+                        <button 
+                            onclick="shareLeaderboard()"
+                            style="padding: 8px; background: transparent; border: none; cursor: pointer; transition: all 0.2s;"
+                            title="Share Leaderboard"
+                        >
+                            <img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACAAIADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAj/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AIyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k=" 
+                                 style="width: 32px; height: 32px; opacity: 0.8; transition: opacity 0.2s;" 
+                                 onmouseover="this.style.opacity='1'" 
+                                 onmouseout="this.style.opacity='0.8'"
+                                 alt="Share"
+                            />
+                        </button>
+                    </div>
                     
-                    <button 
-                        class="btn btn-primary" 
-                        onclick="completeTournament()"
-                        style="margin-top: 24px; background: linear-gradient(135deg, #28a745, #20c997); box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);"
-                    >
-                        ✔️ Complete Tournament
-                    </button>
+                    ${leaderboard.length > 0 ? `
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: var(--light); border-bottom: 2px solid var(--gray-light);">
+                                        <th style="padding: 8px; text-align: left; font-size: 0.75rem; color: var(--gray);">Rank</th>
+                                        <th style="padding: 8px; text-align: left; font-size: 0.75rem; color: var(--gray);">Player</th>
+                                        <th style="padding: 8px; text-align: center; font-size: 0.75rem; color: var(--gray);">W-T-L</th>
+                                        <th style="padding: 8px; text-align: center; font-size: 0.75rem; color: var(--gray);">Diff</th>
+                                        <th style="padding: 8px; text-align: center; font-size: 0.75rem; color: var(--gray);">Pts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${leaderboard.map((player, index) => `
+                                        <tr style="border-bottom: 1px solid var(--gray-light);">
+                                            <td style="padding: 12px 8px;">
+                                                <span class="rank ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}" style="font-size: 1.2rem; font-weight: 700; font-family: 'Space Mono', monospace;">
+                                                    ${index + 1}
+                                                </span>
+                                            </td>
+                                            <td style="padding: 12px 8px;">
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span class="gender-badge ${player.gender === 'M' ? 'male' : 'female'}" style="width: 20px; height: 20px; font-size: 0.65rem; display: inline-flex; align-items: center; justify-content: center;">
+                                                        ${player.gender}
+                                                    </span>
+                                                    <div>
+                                                        <div style="font-weight: 600; font-size: 0.95rem;">${player.name}</div>
+                                                        ${player.grade ? `<div style="font-size: 0.7rem; color: var(--gray);">(${player.grade})</div>` : ''}
+                                                    </div>
+                                                    ${player.stats.compensation ? `<span style="font-size: 0.7rem; color: #ff6b35;" title="Includes ${player.stats.compensation} compensation points">💰</span>` : ''}
+                                                </div>
+                                            </td>
+                                            <td style="padding: 12px 8px; text-align: center;">
+                                                <div style="font-size: 0.85rem; font-family: 'Space Mono', monospace; color: var(--gray);">
+                                                    ${player.stats.wins}-${player.stats.ties}-${player.stats.losses}
+                                                </div>
+                                            </td>
+                                            <td style="padding: 12px 8px; text-align: center;">
+                                                <div style="font-size: 0.95rem; font-weight: 700; font-family: 'Space Mono', monospace; color: ${player.stats.diff >= 0 ? '#28a745' : '#dc3545'};">
+                                                    ${player.stats.diff >= 0 ? '+' : ''}${player.stats.diff}
+                                                </div>
+                                            </td>
+                                            <td style="padding: 12px 8px; text-align: center;">
+                                                <div style="font-size: 1.1rem; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--court-green);">
+                                                    ${player.stats.points}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : '<p style="text-align: center; color: var(--gray);">No games completed yet</p>'}
                 </div>
             `;
         }
@@ -1460,7 +1626,6 @@
                 const compensation = Math.round(playerData.missingRounds * avgPointsPerRound);
                 t.compensationPoints[playerData.player.id] = {
                     points: compensation,
-                    reason: `Auto-compensation for ${playerData.missingRounds} missing round(s)`,
                     type: 'auto'
                 };
             });
@@ -1470,7 +1635,7 @@
             alert(`Auto-compensation applied to ${analysis.playersNeedingCompensation.length} player(s)!`);
         }
 
-        function updateManualCompensation(playerId, points, reason) {
+        function updateManualCompensation(playerId, points) {
             const t = state.currentTournament;
             if (!t.compensationPoints) {
                 t.compensationPoints = {};
@@ -1481,7 +1646,6 @@
             } else {
                 t.compensationPoints[playerId] = {
                     points: parseInt(points),
-                    reason: reason || 'Manual adjustment',
                     type: 'manual'
                 };
             }
@@ -1600,17 +1764,18 @@
                                                         <input 
                                                             type="number" 
                                                             value="${t.compensationPoints && t.compensationPoints[player.id] ? t.compensationPoints[player.id].points : 0}"
-                                                            onchange="updateManualCompensation(${player.id}, this.value, this.nextElementSibling.value)"
+                                                            id="comp_${player.id}"
                                                             style="flex: 1; padding: 8px; border: 2px solid var(--gray-light); border-radius: 6px; font-family: 'Space Mono', monospace; font-weight: 700;"
                                                             placeholder="0"
                                                         />
-                                                        <input 
-                                                            type="text" 
-                                                            value="${t.compensationPoints && t.compensationPoints[player.id] ? t.compensationPoints[player.id].reason : ''}"
-                                                            onchange="updateManualCompensation(${player.id}, this.previousElementSibling.value, this.value)"
-                                                            style="flex: 2; padding: 8px; border: 2px solid var(--gray-light); border-radius: 6px; font-size: 0.875rem;"
-                                                            placeholder="Reason (optional)"
-                                                        />
+                                                        <button 
+                                                            onclick="updateManualCompensation(${player.id}, document.getElementById('comp_${player.id}').value)"
+                                                            style="padding: 8px 16px; background: linear-gradient(135deg, var(--court-green), #3d7021); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;"
+                                                            onmouseover="this.style.transform='scale(1.05)'"
+                                                            onmouseout="this.style.transform='scale(1)'"
+                                                        >
+                                                            ${t.compensationPoints && t.compensationPoints[player.id] ? '✏️ Edit' : '💾 Submit'}
+                                                        </button>
                                                     </div>
                                                     ${t.compensationPoints && t.compensationPoints[player.id] ? `
                                                         <div style="font-size: 0.75rem; color: var(--gray); margin-top: 4px;">
@@ -1699,6 +1864,13 @@
                         <option value="2" ${t.courtCount === 2 ? 'selected' : ''}>2 Courts</option>
                         <option value="3" ${t.courtCount === 3 ? 'selected' : ''}>3 Courts</option>
                         <option value="4" ${t.courtCount === 4 ? 'selected' : ''}>4 Courts</option>
+                    </select>
+
+                    <h3 style="font-size: 1rem; margin-bottom: 8px;">⏱️ Duration</h3>
+                    <select onchange="updateTournamentField('durationHours', parseInt(this.value)); render();" style="margin-bottom: 20px;">
+                        ${[1,2,3,4,5,6,7,8].map(h => `
+                            <option value="${h}" ${t.durationHours === h ? 'selected' : ''}>${h} hour${h > 1 ? 's' : ''}</option>
+                        `).join('')}
                     </select>
 
                     ${!hasRounds ? `
