@@ -628,7 +628,7 @@
     <div id="app"></div>
 
     <div class="footer">
-        Created by SG 2026 • Beta v1.0
+        Created by SG 2026 • v1.1
     </div>
 
     <script>
@@ -654,6 +654,9 @@
                         partnerHistory: p.partnerHistory instanceof Set 
                             ? Array.from(p.partnerHistory) 
                             : (p.partnerHistory || []),
+                        opponentHistory: p.opponentHistory instanceof Set
+                            ? Array.from(p.opponentHistory)
+                            : (p.opponentHistory || []),
                         restHistory: p.restHistory || [],
                         roundsPlayed: p.roundsPlayed || 0
                     }));
@@ -680,6 +683,13 @@
                                     p.partnerHistory = new Set(p.partnerHistory);
                                 } else if (!p.partnerHistory) {
                                     p.partnerHistory = new Set();
+                                }
+                                
+                                // Convert opponentHistory array to Set
+                                if (Array.isArray(p.opponentHistory)) {
+                                    p.opponentHistory = new Set(p.opponentHistory);
+                                } else if (!p.opponentHistory) {
+                                    p.opponentHistory = new Set();
                                 }
                                 
                                 // Ensure restHistory is an array
@@ -888,69 +898,50 @@
                 }
             });
             
-            // Step 4b: For round > 3, use score-based pairing (high-low matching)
-            if (currentRound > 3) {
-                // Sort remaining players by score
-                const remaining = availablePlayers.filter(p => !paired.has(p.id));
-                remaining.sort((a, b) => (b.currentScore || 0) - (a.currentScore || 0));
+            // Step 4b: For all rounds, use smart pairing to avoid repetition
+            // Sort remaining players by score for balance
+            const remaining = availablePlayers.filter(p => !paired.has(p.id));
+            remaining.sort((a, b) => (b.currentScore || 0) - (a.currentScore || 0));
+            
+            // Pair players avoiding previous partners
+            while (remaining.length >= 2) {
+                const player1 = remaining.shift();
+                let bestPartner = null;
+                let bestScore = -Infinity;
                 
-                // Pair highest with lowest, second highest with second lowest, etc.
-                while (remaining.length >= 2) {
-                    const high = remaining.shift();
-                    const low = remaining.pop();
+                // Find the best partner for player1
+                for (let i = 0; i < remaining.length; i++) {
+                    const candidate = remaining[i];
+                    let score = 100;
                     
-                    // Check if they haven't played together
-                    if (!high.partnerHistory.has(low.id)) {
-                        pairs.push({ player1: high, player2: low });
-                        paired.add(high.id);
-                        paired.add(low.id);
-                    } else {
-                        // If they have played together, find next best option
-                        let foundPair = false;
-                        for (let i = remaining.length - 1; i >= 0; i--) {
-                            if (!high.partnerHistory.has(remaining[i].id)) {
-                                const partner = remaining.splice(i, 1)[0];
-                                pairs.push({ player1: high, player2: partner });
-                                paired.add(high.id);
-                                paired.add(partner.id);
-                                remaining.push(low); // Put low back
-                                foundPair = true;
-                                break;
-                            }
-                        }
-                        
-                        // If still no valid pair found, accept repeat pairing
-                        if (!foundPair) {
-                            pairs.push({ player1: high, player2: low });
-                            paired.add(high.id);
-                            paired.add(low.id);
-                        }
+                    // Heavy penalty for previous partners
+                    if (player1.partnerHistory && player1.partnerHistory.has(candidate.id)) {
+                        score -= 100;
+                    }
+                    
+                    // Bonus for balanced partner counts
+                    const p1Partners = player1.partnerHistory ? player1.partnerHistory.size : 0;
+                    const candPartners = candidate.partnerHistory ? candidate.partnerHistory.size : 0;
+                    const partnerBalance = Math.abs(p1Partners - candPartners);
+                    score -= partnerBalance * 10; // Prefer similar experience
+                    
+                    // Small random factor for variety
+                    score += Math.random() * 5;
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestPartner = candidate;
                     }
                 }
-            } else {
-                // Step 4c: For early rounds (1-3), use random pairing avoiding history
-                const remaining = availablePlayers.filter(p => !paired.has(p.id));
                 
-                // Shuffle for randomness
-                for (let i = remaining.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
-                }
-                
-                while (remaining.length >= 2) {
-                    const player1 = remaining.shift();
-                    
-                    // Find a partner who hasn't played with player1
-                    let partnerIndex = remaining.findIndex(p => !player1.partnerHistory.has(p.id));
-                    
-                    // If all have played together, just take the first available
-                    if (partnerIndex === -1) partnerIndex = 0;
-                    
-                    const player2 = remaining.splice(partnerIndex, 1)[0];
-                    
-                    pairs.push({ player1, player2 });
+                if (bestPartner) {
+                    const partnerIndex = remaining.indexOf(bestPartner);
+                    remaining.splice(partnerIndex, 1);
+                    pairs.push({ player1, player2: bestPartner });
                     paired.add(player1.id);
-                    paired.add(player2.id);
+                    paired.add(bestPartner.id);
+                    
+                    console.log(`👥 Pair: ${player1.name}+${bestPartner.name} (score: ${bestScore.toFixed(1)})`);
                 }
             }
             
@@ -1077,16 +1068,33 @@
                                 status: 'pending'
                             });
                             
-                            // Update partner history in tournament players
+                            // Update partner AND opponent history in tournament players
                             if (!p1_1.partnerHistory) p1_1.partnerHistory = new Set();
                             if (!p1_2.partnerHistory) p1_2.partnerHistory = new Set();
                             if (!p2_1.partnerHistory) p2_1.partnerHistory = new Set();
                             if (!p2_2.partnerHistory) p2_2.partnerHistory = new Set();
                             
+                            if (!p1_1.opponentHistory) p1_1.opponentHistory = new Set();
+                            if (!p1_2.opponentHistory) p1_2.opponentHistory = new Set();
+                            if (!p2_1.opponentHistory) p2_1.opponentHistory = new Set();
+                            if (!p2_2.opponentHistory) p2_2.opponentHistory = new Set();
+                            
+                            // Partners
                             p1_1.partnerHistory.add(p1_2.id);
                             p1_2.partnerHistory.add(p1_1.id);
                             p2_1.partnerHistory.add(p2_2.id);
                             p2_2.partnerHistory.add(p2_1.id);
+                            
+                            // Opponents (cross-team)
+                            p1_1.opponentHistory.add(p2_1.id);
+                            p1_1.opponentHistory.add(p2_2.id);
+                            p1_2.opponentHistory.add(p2_1.id);
+                            p1_2.opponentHistory.add(p2_2.id);
+                            
+                            p2_1.opponentHistory.add(p1_1.id);
+                            p2_1.opponentHistory.add(p1_2.id);
+                            p2_2.opponentHistory.add(p1_1.id);
+                            p2_2.opponentHistory.add(p1_2.id);
                             
                             // Increment court index, cycle back if exceeds court count
                             courtIndex++;
@@ -1307,12 +1315,10 @@
                     const roundToDelete = state.currentTournament.rounds.find(r => r.id === roundId);
                     
                     if (roundToDelete) {
-                        // Clean up partner history from this round
+                        // Clean up partner AND opponent history from this round
                         const matches = roundToDelete.matches || roundToDelete.games || [];
                         matches.forEach(match => {
-                            const allPlayers = [...match.team1, ...match.team2];
-                            
-                            // Remove partner relationships from this round
+                            // Remove partner relationships (same team)
                             if (match.team1 && match.team1.length === 2) {
                                 const p1 = state.currentTournament.players.find(p => p.id === match.team1[0].id);
                                 const p2 = state.currentTournament.players.find(p => p.id === match.team1[1].id);
@@ -1325,6 +1331,18 @@
                                 const p2 = state.currentTournament.players.find(p => p.id === match.team2[1].id);
                                 if (p1 && p1.partnerHistory) p1.partnerHistory.delete(match.team2[1].id);
                                 if (p2 && p2.partnerHistory) p2.partnerHistory.delete(match.team2[0].id);
+                            }
+                            
+                            // Remove opponent relationships (cross-team)
+                            if (match.team1 && match.team2) {
+                                match.team1.forEach(t1Player => {
+                                    match.team2.forEach(t2Player => {
+                                        const p1 = state.currentTournament.players.find(p => p.id === t1Player.id);
+                                        const p2 = state.currentTournament.players.find(p => p.id === t2Player.id);
+                                        if (p1 && p1.opponentHistory) p1.opponentHistory.delete(t2Player.id);
+                                        if (p2 && p2.opponentHistory) p2.opponentHistory.delete(t1Player.id);
+                                    });
+                                });
                             }
                         });
                     }
