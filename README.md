@@ -69,5 +69,6 @@ Then navigate to `http://localhost:8000`
 
 ## Created By
 
-Surya G. · 2026 · Beta Version v0.5
+Surya G. · 2026 · Beta Version v1.0
+
 
